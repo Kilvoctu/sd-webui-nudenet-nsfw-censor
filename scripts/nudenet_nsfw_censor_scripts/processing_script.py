@@ -1,6 +1,7 @@
 from scripts.nudenet_nsfw_censor_scripts.censor_image_filters import apply_filter
 from scripts.nudenet_nsfw_censor_scripts.pil_nude_detector import pil_nude_detector
 from modules import scripts, shared, images, processing
+from modules.processing import StableDiffusionProcessing, Processed
 from PIL import ImageFilter
 from math import sqrt
 
@@ -97,6 +98,9 @@ class ScriptNudenetCensor(scripts.Script):
 
             if shared.opts.nudenet_nsfw_censor_gen_filter_type:
                 pp.image = apply_filter(pp.image, censor_mask, shared.opts.nudenet_nsfw_censor_gen_filter_type, **filter_settings)
+
+    def postprocess_image(self, p: StableDiffusionProcessing, processed: Processed):
+        p.extra_generation_params["NudeNet Detector"] = pil_nude_detector.is_censored
 
     if not hasattr(scripts.Script, 'postprocess_image_after_composite'):
         postprocess_image = postprocess_image_after_composite

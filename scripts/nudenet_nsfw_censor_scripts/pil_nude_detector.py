@@ -82,6 +82,8 @@ class PilNudeDetector:
         self.expand_horizontal = None
         self.expand_vertical = None
 
+        self.is_censored = None
+
     def init_onnx(self):
         self.onnx_session = InferenceSession(
             str(Path(__file__).parent.parent.parent.joinpath('nudenet', 'best.onnx')),
@@ -127,6 +129,8 @@ class PilNudeDetector:
         offset = ((self.input_width - new_size[0]) // 2, (self.input_height - new_size[1]) // 2)
         pad_image.paste(resized_image, offset)
 
+        self.is_censored = False
+
         # convert to desired format
         return np.expand_dims(np.array(pad_image, dtype=np.float32).transpose(2, 0, 1) / 255.0, axis=0)
 
@@ -154,6 +158,7 @@ class PilNudeDetector:
         filter_results = np.max(outputs[:, 4:], axis=1) > thresholds[np.argmax(outputs[:, 4:], axis=1)]
 
         if np.any(filter_results):
+            self.is_censored = True
             draw_func = mask_shapes_func_dict[nudenet_nsfw_censor_mask_shape]
             if draw_func is None:
                 # just return a mask for the entire image
